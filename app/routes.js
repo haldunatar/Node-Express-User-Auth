@@ -42,9 +42,9 @@ module.exports = (app, passport) => {
     // Admin ======================================================
     // =============================================================================
     // TODO: Admin add user (as logged in)
-    //
-    // app.get('/admin', isAdmin, (req, res, next) => getAllUsers(req, res, next));
-    //
+
+    app.get('/admin', isAdmin, (req, res, next) => getAllUsers(req, res, next));
+
     // app.put('/changeUserRole', isAdmin, (req, res) => editUser (req, res));
     //
     // app.delete('/removeUser', isAdmin, (req, res) => removeUser (req, res));
@@ -61,15 +61,17 @@ module.exports = (app, passport) => {
 };
 
 function signUp (req, res, next) {
-    console.log('comes here');
-
     passport.authenticate('local-signup', (err, user, info) => {
 
         if (err) {
+            console.log('err!', err);
             return next(err);
+
         } else if(!user) {
+
             return res.send(info);
         } else {
+
             return res.send(200);
         }
     })(req, res, next);
@@ -105,7 +107,16 @@ function signOut (req, res) {
     res.redirect('/');
 }
 
-function getAllUsers (req, res, next) {}
+function getAllUsers (req, res, next) {
+    Users.find({}, (err, users) => {
+
+        if (err) {
+            res.send(err)
+        } else {
+            res.send(users)
+        }
+    });
+}
 
 function editUser (req, res) {}
 

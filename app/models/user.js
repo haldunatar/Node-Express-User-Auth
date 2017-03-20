@@ -2,18 +2,19 @@
 
 var mongoose = require('mongoose');
 var bcrypt   = require('bcrypt-nodejs');
- 
+
 // define the schema for our user model
 var userSchema = mongoose.Schema(
     {
-    resetPasswordToken  : String,
-    resetPasswordExpires: Date,
-    local: {
-        email               : String,
-        password            : String
+        resetPasswordToken  : String,
+        resetPasswordExpires: Date,
+        local: {
+            email               : String,
+            password            : String
+        },
+        isAdmin: { type: Boolean, default: false }
     },
-    isAdmin: { type: Boolean, default: false }
-    }, {strict: false}
+    { strict: false }
 );
 
 // generating a hash
