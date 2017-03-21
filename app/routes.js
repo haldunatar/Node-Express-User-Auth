@@ -118,9 +118,25 @@ function getAllUsers (req, res, next) {
     });
 }
 
-function editUser (req, res) {}
+function editUser (req, res) {
+    Users.update({_id: req.body.userId}, {isAdmin: req.body.isAdmin}, (err, user) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(200);
+        }
+    });
+}
 
-function removeUser (req, res) {}
+function removeUser (req, res) {
+    Users.remove({_id: req.body.userId}, (err, user) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send(200);
+        }
+    });
+}
 
 function passwordForgot(req, res, next) {}
 
