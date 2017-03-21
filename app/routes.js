@@ -45,9 +45,9 @@ module.exports = (app, passport) => {
 
     app.get('/admin', isAdmin, (req, res, next) => getAllUsers(req, res, next));
 
-    // app.put('/changeUserRole', isAdmin, (req, res) => editUser (req, res));
-    //
-    // app.delete('/removeUser', isAdmin, (req, res) => removeUser (req, res));
+    app.put('/changeUserRole', isAdmin, (req, res) => editUser (req, res));
+
+    app.delete('/removeUser', isAdmin, (req, res) => removeUser (req, res));
 
     // =============================================================================
     // RESET PASSWORD ==============================================================
