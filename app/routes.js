@@ -10,7 +10,11 @@ const passport = require('passport');
 const Users = require('./models/user');
 const bcrypt = require('bcrypt-nodejs');
 
-// TODO: Security checks
+/*
+    * TODO: Security checks
+    * TODO: Unit tests
+    * TODO: Sessions or token based?
+*/
 
 module.exports = (app, passport) => {
 
@@ -41,7 +45,7 @@ module.exports = (app, passport) => {
     // =============================================================================
     // Admin ======================================================
     // =============================================================================
-    // TODO: Admin add user (as logged in)
+    //
 
     app.get('/admin', isAdmin, (req, res, next) => getAllUsers(req, res, next));
 
@@ -169,7 +173,7 @@ function passwordForgot(req, res, next) {
 
             const mailOptions = {
                 to: req.body.email,
-                from: 'devnode7@gmail.com',
+                from: 'yourEmailAddress',
                 subject: 'Node.js Password Reset',
                 text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
                 'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
@@ -180,8 +184,8 @@ function passwordForgot(req, res, next) {
             const smtpTransport = nodemailer.createTransport('SMTP', {
                 service: 'gmail',
                 auth: {
-                    user: 'devnode7@gmail.com',
-                    pass: '77119933'
+                    user: 'yourEmailAddress',
+                    pass: 'yourPass'
                 }
             });
 
@@ -234,7 +238,7 @@ function resetPassword(req, res) {
         (user, done) => {
             var mailOptions = {
                 to: user.local.email,
-                from: 'devnode7@gmail.com',
+                from: 'yourEmailAddress',
                 subject: 'Your password has been changed',
                 text: 'Hello,\n\n' +
                 'This is a confirmation that the password for your account ' + user.local.email + ' has just been changed.\n'
@@ -243,8 +247,8 @@ function resetPassword(req, res) {
             var smtpTransport = nodemailer.createTransport('SMTP', {
                 service: 'gmail',
                 auth: {
-                    user: 'devnode7@gmail.com',
-                    pass: '77119933'
+                    user: 'yourEmailAddress',
+                    pass: 'yourPass'
                 }
             });
             smtpTransport.sendMail(mailOptions, (err) => {
