@@ -24,7 +24,7 @@ module.exports = (app, passport) => {
 
     app.get('/signIn', (req, res) => res.render('sign-in.html'));
 
-    // app.get('/passwordForgot', (req, res) => res.render('password-forgot.html'));
+    app.get('/passwordForgot', (req, res) => res.render('password-forgot.html'));
 
     app.get('/restrictedArea', isLoggedIn, (req, res) => res.render('user.html'));
 
@@ -53,11 +53,11 @@ module.exports = (app, passport) => {
     // RESET PASSWORD ==============================================================
     // =============================================================================
 
-    // app.post('/passwordForgot', (req, res, next) => passwordForgot(req, res, next));
-    //
-    // app.get('/reset/:token', (req, res) => validateToken(req, res));
-    //
-    // app.post('/reset/:token', (req, res) => resetPassword(req, res));
+    app.post('/passwordForgot', (req, res, next) => passwordForgot(req, res, next));
+
+    app.get('/reset/:token', (req, res) => validateToken(req, res));
+
+    app.post('/reset/:token', (req, res) => resetPassword(req, res));
 };
 
 function signUp (req, res, next) {
@@ -138,11 +138,125 @@ function removeUser (req, res) {
     });
 }
 
-function passwordForgot(req, res, next) {}
+function passwordForgot(req, res, next) {
+    let token;
 
-function validateToken (req, res) {}
+    async.waterfall([
+        (done) => {
+            crypto.randomBytes(20, (err, buf) => {
+                token = buf.toString('hex');
+                done(err, token);
+            });
+        },
+        (token, done) => {
+            Users.findOne({ 'local.email': req.body.email }, (err, user) => {
+                if (!user) {
+                    return res.send({
+                        status: 401,
+                        message: 'No account with that email address exists.'
+                    });
+                }
 
-function resetPassword(req, res) {}
+                user.resetPasswordToken = token;
+                user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+                user.save((err) => {
+                    done(err, token, user);
+                });
+            });
+        },
+        (token, user, done) => {
+
+            const mailOptions = {
+                to: req.body.email,
+                from: 'devnode7@gmail.com',
+                subject: 'Node.js Password Reset',
+                text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
+                'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+                'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+                'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+            };
+
+            const smtpTransport = nodemailer.createTransport('SMTP', {
+                service: 'gmail',
+                auth: {
+                    user: 'devnode7@gmail.com',
+                    pass: '77119933'
+                }
+            });
+
+            smtpTransport.sendMail(mailOptions, (err) => {
+                return res.send({
+                    status: 200,
+                    message: 'Sent to ' + user.local.email
+                });
+                done(err, 'done');
+            });
+        }
+    ], (err) => {
+
+        if (err) return next(err);
+        res.redirect('/passwordForgot');
+    });
+}
+
+function validateToken (req, res) {
+    Users.findOne({resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, (err, user) =>{
+        if (!user) {
+            res.send('Password reset token is invalid or has expired.');
+        }
+        res.redirect('/passwordForgot');
+    });
+}
+
+function resetPassword(req, res) {
+
+    async.waterfall([
+        (done) => {
+            Users.findOne({resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, (err, user) => {
+                if (!user) {
+                    res.writeHeader(200, {"Content-Type": "text/html"});
+                    res.write('<h2>This link is expired! <a href="/#/forgot">create new</a></h2>');
+                    res.end();
+                }
+
+                user.local.password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync(8), null);
+                user.resetPasswordToken = undefined;
+                user.resetPasswordExpires = undefined;
+
+                user.save((err) => {
+                    req.logIn(user, (err) => {
+                        done(err, user);
+                    });
+                });
+            });
+        },
+        (user, done) => {
+            var mailOptions = {
+                to: user.local.email,
+                from: 'devnode7@gmail.com',
+                subject: 'Your password has been changed',
+                text: 'Hello,\n\n' +
+                'This is a confirmation that the password for your account ' + user.local.email + ' has just been changed.\n'
+            };
+
+            var smtpTransport = nodemailer.createTransport('SMTP', {
+                service: 'gmail',
+                auth: {
+                    user: 'devnode7@gmail.com',
+                    pass: '77119933'
+                }
+            });
+            smtpTransport.sendMail(mailOptions, (err) => {
+                // password changed and a confirmation email is sent to user
+                return res.redirect('/signIn');
+                done(err);
+            });
+        }
+    ], (err) => {
+        res.redirect('/');
+    });
+}
 
 function isLoggedIn(req, res, next) {
 
